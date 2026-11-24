@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+# Lo que generan los scripts al ejecutarse en local.
+_site/
+informe*.md
+# Configuración local con claves: nunca se sube.
+.env
+.env.*
+!.env.example
+*.sqlite3
+.DS_Store
