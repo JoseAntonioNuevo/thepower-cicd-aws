@@ -26,3 +26,14 @@ El rollback utilizó el digest original de A y registró una nueva revisión de 
 - La [PR de solución](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/pull/3) muestra la [prueba que faltaba, en rojo](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/actions/runs/45504149754), y [el arreglo, en verde](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/actions/runs/45504229664). La rama de la solución se conserva para estudiar el cambio.
 
 Para repetir el ejercicio desde cero, usa el código A de la rama principal. El commit de preparación de la rama principal puede tener otra imagen en ECR. La publicación por sí sola no cambia staging. Las etiquetas [aula-A](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/tree/aula-A) y [aula-B](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/tree/aula-B) identifican las revisiones de la aplicación que se desplegaron en este ensayo.
+
+## Repetición completa desde el runner de GitHub
+
+El workflow abre el acceso solo para su IPv4 durante las pruebas. Con el servicio ya estable, comprueba salud, versión, una clasificación válida y una entrada inválida. Además, el parámetro `prioridad_baja` permite exigir 500 en B o 200 en el rollback. El mismo job escribe el resultado y el request ID en el resumen y cierra su regla de red. En este recorrido, el portátil solo necesita acceso a las API de GitHub y AWS.
+
+| Versión | Hora de Madrid | Tarea ECS | HTTP observado por el runner | Request ID confirmado en CloudWatch |
+|---|---|---|---:|---|
+| [B](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/actions/runs/45507743745) | 25/11 00:14:02 | `s18-aula-20261125:7` | 500 | `c8c61a5a-7505-43c1-8450-b4963885d66b` |
+| [A](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/actions/runs/45508237177) | 25/11 00:17:20 | `s18-aula-20261125:8` | 200 | `8f8bcbf5-3f17-4c23-a9e7-36fe94e2d14f` |
+
+En B, CloudWatch registró `KeyError` y el estado 500 para el identificador de la tabla. Tras el rollback, el identificador de A corresponde a una respuesta 200 del commit original. ECS confirmó el mismo digest A del primer despliegue.
