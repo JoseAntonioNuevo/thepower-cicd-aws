@@ -18,6 +18,13 @@ on:
         default: despliegue
         options: [despliegue, rollback]
 
+      prioridad_baja:
+        description: "Estado esperado para la consulta de prioridad baja del ensayo"
+        required: false
+        type: choice
+        default: omitir
+        options: [omitir, "200", "500"]
+
 permissions:
   contents: read
 
@@ -208,6 +215,21 @@ jobs:
         run: |
           # Un job en verde no basta: la API tiene que responder y con la versión esperada.
           bash scripts/smoke.sh "http://$IP:8000" "$COMMIT"
+
+      - name: Probar la consulta de prioridad baja y guardar su request ID
+        if: inputs.prioridad_baja != 'omitir'
+        env:
+          IP: ${{ steps.despues.outputs.ip }}
+          ESPERADO: ${{ inputs.prioridad_baja }}
+        run: |
+          bash scripts/consulta-baja.sh "http://$IP:8000" "$ESPERADO" > consulta-baja.txt
+          cat consulta-baja.txt
+          {
+            echo "### Consulta de prioridad baja"
+            echo '~~~text'
+            cat consulta-baja.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Cerrar el puerto
         if: always() && steps.regla.outputs.id != ''
