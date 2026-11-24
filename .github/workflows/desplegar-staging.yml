@@ -145,15 +145,21 @@ jobs:
           # shellcheck disable=SC2016  # las comillas invertidas son de la consulta, no de Bash
           # Un servicio «estable» también lo está si ECS deshizo el cambio porque la tarea
           # nueva no arrancaba (circuit breaker). Por eso leemos qué ejecuta.
-          PRINCIPAL="$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICIO" \
-            --query 'services[0].deployments[?status==`PRIMARY`] | [0].{definicion:taskDefinition,estado:rolloutState,motivo:rolloutStateReason}' \
-            --output json)"
-          echo "$PRINCIPAL"
-          if [[ "$(jq -r '.definicion' <<<"$PRINCIPAL")" != "$DEFINICION" \
-             || "$(jq -r '.estado' <<<"$PRINCIPAL")" != "COMPLETED" ]]; then
-            echo "::error::El servicio no ejecuta la definición nueva: el despliegue falló o ECS volvió a la anterior."
-            exit 1
-          fi
+          # El waiter puede terminar antes de que rolloutState pase a COMPLETED.
+          for intento in {1..60}; do
+            PRINCIPAL="$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICIO" \
+              --query 'services[0].deployments[?status==`PRIMARY`] | [0].{definicion:taskDefinition,estado:rolloutState}' --output json)"
+            if [[ "$(jq -r .definicion <<<"$PRINCIPAL")" != "$DEFINICION" || "$(jq -r .estado <<<"$PRINCIPAL")" == FAILED ]]; then
+              echo "::error::ECS rechazó la revisión o recuperó la anterior."
+              exit 1
+            fi
+            [[ "$(jq -r .estado <<<"$PRINCIPAL")" == COMPLETED ]] && break
+            if [[ "$intento" == 60 ]]; then
+              echo "::error::ECS sigue desplegando después del tiempo de espera."
+              exit 1
+            fi
+            sleep 5
+          done
           TAREAS="$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SERVICIO" \
             --desired-status RUNNING --query 'taskArns' --output text)"
           # shellcheck disable=SC2086  # la lista de tareas se separa por espacios a propósito
