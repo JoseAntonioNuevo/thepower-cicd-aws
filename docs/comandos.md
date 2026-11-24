@@ -3,7 +3,7 @@
 Bash (macOS, Linux o Git Bash). Cada momento de demo tiene dos versiones:
 
 - **GitHub/AWS**: requiere el repositorio publicado y los stacks de [README.md](../README.md),
-  pasos 4–7. El ensayo del 24/11 utilizó las credenciales temporales de la CLI del profesor para publicar en ECR y desplegar en Fargate.
+  pasos 4–7. [El ensayo de la clase](ensayo.md) verificó publicación, despliegue y rollback desde GitHub Actions con OIDC.
 - **Local**: no necesita cuentas; se ejecutó de verdad el 17/11/2026 (Docker 29.9.3, uv 0.13.7).
 
 Variables usadas en la versión GitHub/AWS (valores de ejemplo):

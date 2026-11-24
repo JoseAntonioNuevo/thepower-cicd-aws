@@ -9,7 +9,9 @@ sesión 16— con todo lo necesario para entregarla con garantías:
 - cada petición deja un **log estructurado** con el que se localiza un fallo;
 - si la versión nueva falla, se **vuelve a la anterior** reutilizando su digest.
 
-**Ensayo del aula del 24/11/2026.** Se probaron los tres parches y las dos imágenes linux/amd64. El profesor publicó ambas imágenes en ECR desde el Mac y desplegó la variante B en ECS/Fargate. Una petición real de prioridad baja devolvió 500 y produjo una excepción `KeyError` en CloudWatch. Al volver al digest A, la misma petición devolvió 200. Los workflows de las secciones 4–8 permiten repetir la práctica con GitHub Actions y OIDC en un repositorio configurado para ello.
+**Práctica de alumnos.** Descarga el [ZIP de la rama principal](https://github.com/JoseAntonioNuevo/thepower-cicd-aws/archive/refs/heads/main.zip), descomprímelo en una carpeta independiente y empieza por el paso 2. En A, los parches 01 y 02 se ensayan en ramas independientes. El 03 se aplica sobre B.
+
+El [ensayo completo](docs/ensayo.md) incluye los runs reales de GitHub Actions, el fallo en CloudWatch y la recuperación en ECS. Para hacer la práctica en tu propio proyecto AWS, sigue los pasos 4–9.
 
 ## Qué hay en la carpeta
 
@@ -142,7 +144,7 @@ echo "$PREFIJO"   # p. ej. repo:tu-usuario@1111111/thepower-cicd@2222222 (valore
 aws cloudformation deploy --stack-name "$LAB-registro" \
   --template-file infra/01-registro-y-publicacion.yaml \
   --capabilities CAPABILITY_IAM \
-  --parameter-overrides "Lab=$LAB" "SubPublicar=$PREFIJO:ref:refs/heads/main"
+  --parameter-overrides "Lab=$LAB" "SubPublicar=${PREFIJO}:ref:refs/heads/main"
 ```
 
 Si en tu proyecto ya existe el proveedor `token.actions.githubusercontent.com`, añade
@@ -188,7 +190,7 @@ aws cloudformation deploy --stack-name "$LAB-staging" \
   --template-file infra/02-staging.yaml --capabilities CAPABILITY_IAM \
   --parameter-overrides "Lab=$LAB" "AllowedCidr=$MI_IP/32" \
     "ImageUri=$CUENTA.dkr.ecr.$AWS_REGION.amazonaws.com/$LAB@$DIGEST_A" \
-    "SubDesplegar=$PREFIJO:environment:staging"
+    "SubDesplegar=${PREFIJO}:environment:staging"
 
 gh variable set ECS_CLUSTER --env staging --body "$(salida "$LAB-staging" Cluster)"
 gh variable set ECS_SERVICE --env staging --body "$(salida "$LAB-staging" Service)"
