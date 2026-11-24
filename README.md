@@ -241,7 +241,7 @@ Al integrar, `Publicar · main` deja el digest de B. Despliégalo **sin reconstr
 ```bash
 DIGEST_B="$(aws ecr describe-images --repository-name "$LAB" \
   --image-ids "imageTag=$(git rev-parse HEAD)" --query 'imageDetails[0].imageDigest' --output text)"
-gh workflow run desplegar-staging.yml --ref main -f "digest=$DIGEST_B" -f motivo=despliegue
+gh workflow run desplegar-staging.yml --ref main -f "digest=$DIGEST_B" -f motivo=despliegue -f prioridad_baja=500
 ```
 
 El workflow comprueba que el digest existe y lleva la etiqueta de un commit, registra una
@@ -257,6 +257,8 @@ curl -sS -X POST "http://$IP:8000/clasificar" -H 'Content-Type: application/json
   -d '{"texto":"Tengo una duda sobre los horarios"}'
 # {"error":"error_interno","request_id":"…"}
 ```
+
+El runner ejecuta también esta consulta cuando seleccionas el estado esperado en «prioridad_baja». El resumen de Actions muestra el código HTTP y el request ID para buscar en CloudWatch.
 
 B calcula el plazo con un diccionario al que le falta la prioridad `baja`. El cliente solo
 recibe un `request_id`; con él se encuentra la causa en CloudWatch:
@@ -281,7 +283,7 @@ filter evento = "peticion" and ruta = "/clasificar"
 ### 8.4 Rollback: el mismo workflow con el digest anterior
 
 ```bash
-gh workflow run desplegar-staging.yml --ref main -f "digest=$DIGEST_A" -f motivo=rollback
+gh workflow run desplegar-staging.yml --ref main -f "digest=$DIGEST_A" -f motivo=rollback -f prioridad_baja=200
 ```
 
 No se reconstruye ni se revierte ningún commit: se vuelve a ejecutar la imagen A que ya se
